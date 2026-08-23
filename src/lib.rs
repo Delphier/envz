@@ -1,6 +1,7 @@
 mod env;
 pub use env::Environment;
 
+pub mod registry;
 pub mod var;
 
 #[derive(Debug, thiserror::Error)]
