@@ -3,7 +3,8 @@ use std::env::{join_paths, split_paths};
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
 use windows::Win32::Foundation::ERROR_FILE_NOT_FOUND;
-use windows_registry::HSTRING;
+use windows_registry::{HSTRING, ValueIterator};
+
 pub use windows_registry::{CURRENT_USER, Key, LOCAL_MACHINE};
 
 pub struct StringEntry {
@@ -25,6 +26,12 @@ impl Node {
     pub fn create(parent: &Key, path: impl AsRef<str>) -> Result<Self> {
         Ok(Self {
             key: parent.create(path)?,
+        })
+    }
+
+    pub fn open(parent: &Key, path: impl AsRef<str>) -> Result<Self> {
+        Ok(Self {
+            key: parent.open(path)?,
         })
     }
 
@@ -58,6 +65,10 @@ impl Node {
             Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => (),
             r @ _ => r?,
         })
+    }
+
+    pub fn values(&self) -> Result<ValueIterator<'_>> {
+        Ok(self.key.values()?)
     }
 
     pub fn get(&self, name: impl AsRef<str>) -> Result<Option<OsString>> {
