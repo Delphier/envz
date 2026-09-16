@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::env::Environment;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 
 pub fn set(name: impl AsRef<str>, value: impl AsRef<OsStr>) -> Result<()> {
     Environment::new()?.set(name, value)
@@ -12,6 +12,10 @@ pub fn set_expand(name: impl AsRef<str>, value: impl AsRef<OsStr>) -> Result<()>
 
 pub fn remove(name: impl AsRef<str>) -> Result<()> {
     Environment::new()?.remove(name)
+}
+
+pub fn get(name: impl AsRef<str>) -> Result<Option<OsString>> {
+    Environment::new()?.get(name)
 }
 
 pub fn placeholder(name: impl AsRef<str>) -> String {
