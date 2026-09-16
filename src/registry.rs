@@ -3,9 +3,16 @@ use std::env::{join_paths, split_paths};
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
 use windows::Win32::Foundation::ERROR_FILE_NOT_FOUND;
-use windows_registry::{HSTRING, ValueIterator};
+use windows_registry::{CURRENT_USER, HSTRING, Key, LOCAL_MACHINE, ValueIterator};
 
-pub use windows_registry::{CURRENT_USER, Key, LOCAL_MACHINE};
+pub const HKCU: &Node = &Node {
+    root: CURRENT_USER,
+    key: None,
+};
+pub const HKLM: &Node = &Node {
+    root: LOCAL_MACHINE,
+    key: None,
+};
 
 pub struct StringEntry {
     pub name: &'static str,
@@ -19,19 +26,29 @@ impl StringEntry {
 }
 
 pub struct Node {
-    key: Key,
+    root: &'static Key,
+    key: Option<Key>,
 }
 
 impl Node {
-    pub fn create(parent: &Key, path: impl AsRef<str>) -> Result<Self> {
+    fn key(&self) -> &Key {
+        match &self.key {
+            Some(key) => key,
+            None => self.root,
+        }
+    }
+
+    pub fn create(&self, path: impl AsRef<str>) -> Result<Self> {
         Ok(Self {
-            key: parent.create(path)?,
+            root: self.root,
+            key: Some(self.key().create(path)?),
         })
     }
 
-    pub fn open(parent: &Key, path: impl AsRef<str>) -> Result<Self> {
+    pub fn open(&self, path: impl AsRef<str>) -> Result<Self> {
         Ok(Self {
-            key: parent.open(path)?,
+            root: self.root,
+            key: Some(self.key().open(path)?),
         })
     }
 
@@ -55,24 +72,24 @@ impl Node {
     ) -> Result<()> {
         let value = &HSTRING::from(value.as_ref());
         Ok(match is_expand {
-            true => self.key.set_expand_hstring(name, value)?,
-            false => self.key.set_hstring(name, value)?,
+            true => self.key().set_expand_hstring(name, value)?,
+            false => self.key().set_hstring(name, value)?,
         })
     }
 
     fn remove_value(&self, name: impl AsRef<str>) -> Result<()> {
-        Ok(match self.key.remove_value(name) {
+        Ok(match self.key().remove_value(name) {
             Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => (),
             r @ _ => r?,
         })
     }
 
     pub fn values(&self) -> Result<ValueIterator<'_>> {
-        Ok(self.key.values()?)
+        Ok(self.key().values()?)
     }
 
     pub fn get(&self, name: impl AsRef<str>) -> Result<Option<OsString>> {
-        match self.key.get_hstring(name) {
+        match self.key().get_hstring(name) {
             Ok(s) => Ok(Some(s.to_os_string())),
             Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => Ok(None),
             Err(e) => Err(e.into()),

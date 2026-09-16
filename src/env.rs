@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::registry::{CURRENT_USER, Key, Node, StringEntry};
+use crate::registry::{HKCU, Node, StringEntry};
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
@@ -10,12 +10,12 @@ pub struct Environment {
 
 impl Environment {
     pub fn new() -> Result<Self> {
-        Self::create(CURRENT_USER, "Environment", true)
+        Self::create(HKCU, "Environment", true)
     }
 
-    pub fn create(parent: &Key, path: impl AsRef<str>, is_path_expand: bool) -> Result<Self> {
+    pub fn create(node: &Node, path: impl AsRef<str>, is_path_expand: bool) -> Result<Self> {
         Ok(Self {
-            node: Node::create(parent, path)?,
+            node: node.create(path)?,
             path: StringEntry::new("Path", is_path_expand),
         })
     }

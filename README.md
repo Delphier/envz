@@ -22,7 +22,7 @@ same effect as editing environment variables through the Windows GUI.
 - Support for both regular (`REG_SZ`) and expandable
   (`REG_EXPAND_SZ`) string values, so values containing references
   like `%JAVA_HOME%` are stored correctly.
-- Convenient helpers for managing the `Path` variable:
+- Convenient helpers for managing the `PATH` variable:
   - read it as a `Vec<PathBuf>`
   - append (`push`) or prepend (`insert`) entries, skipping
     case-insensitive duplicates
@@ -40,7 +40,7 @@ Add `envz` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-envz = "0.1"
+envz = "0.3"
 ```
 
 Or, to track the repository directly:
@@ -91,7 +91,7 @@ fn main() -> envz::Result<()> {
 }
 ```
 
-### Managing `Path`
+### Managing `PATH`
 
 ```rust
 use envz::var::path;
@@ -118,11 +118,11 @@ administrator privileges) or a key used in tests:
 
 ```rust
 use envz::Environment;
-use windows_registry::LOCAL_MACHINE;
+use envz::registry::HKLM;
 
 fn main() -> envz::Result<()> {
     let system_env = Environment::create(
-        LOCAL_MACHINE,
+        HKLM,
         r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
         true, // whether Path is stored as an expandable string on this key
     )?;
