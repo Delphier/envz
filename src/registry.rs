@@ -3,7 +3,7 @@ use std::env::{join_paths, split_paths};
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
 use windows::Win32::Foundation::ERROR_FILE_NOT_FOUND;
-use windows_registry::{CURRENT_USER, HSTRING, Key, LOCAL_MACHINE, ValueIterator};
+use windows_registry::{CURRENT_USER, HSTRING, Key, KeyIterator, LOCAL_MACHINE, ValueIterator};
 
 pub const HKCU: &Node = &Node {
     root: CURRENT_USER,
@@ -82,6 +82,10 @@ impl Node {
             Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => (),
             r @ _ => r?,
         })
+    }
+
+    pub fn keys(&self) -> Result<KeyIterator<'_>> {
+        Ok(self.key().keys()?)
     }
 
     pub fn values(&self) -> Result<ValueIterator<'_>> {
