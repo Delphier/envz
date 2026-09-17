@@ -100,6 +100,26 @@ impl Node {
         }
     }
 
+    pub fn get_u64(&self, name: impl AsRef<str>) -> Result<Option<u64>> {
+        match self.key().get_u64(name) {
+            Ok(u) => Ok(Some(u)),
+            Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => Ok(None),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub fn get_bool(&self, name: impl AsRef<str>) -> Result<Option<bool>> {
+        self.get_u64(name).map(|o| o.map(|u| u != 0))
+    }
+
+    pub fn set_u32(&self, name: impl AsRef<str>, value: u32) -> Result<()> {
+        Ok(self.key().set_u32(name, value)?)
+    }
+
+    pub fn set_bool(&self, name: impl AsRef<str>, value: bool) -> Result<()> {
+        self.set_u32(name, value.into())
+    }
+
     pub fn get_paths(&self, entry: &StringEntry) -> Result<Vec<PathBuf>> {
         Ok(split_paths(&self.get(entry.name)?.unwrap_or_default()).collect())
     }
