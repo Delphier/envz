@@ -1,4 +1,5 @@
 use crate::Result;
+use std::borrow::Cow;
 use std::env::{join_paths, split_paths};
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
@@ -15,13 +16,16 @@ pub const HKLM: &Node = &Node {
 };
 
 pub struct StringEntry {
-    pub name: &'static str,
-    pub is_expand: bool,
+    pub name: Cow<'static, str>,
+    pub expandable: bool,
 }
 
 impl StringEntry {
-    pub fn new(name: &'static str, is_expand: bool) -> Self {
-        Self { name, is_expand }
+    pub fn new(name: impl Into<Cow<'static, str>>, expandable: bool) -> Self {
+        Self {
+            name: name.into(),
+            expandable,
+        }
     }
 }
 
@@ -68,10 +72,10 @@ impl Node {
         &self,
         name: impl AsRef<str>,
         value: impl AsRef<OsStr>,
-        is_expand: bool,
+        expandable: bool,
     ) -> Result<()> {
         let value = &HSTRING::from(value.as_ref());
-        Ok(match is_expand {
+        Ok(match expandable {
             true => self.key().set_expand_hstring(name, value)?,
             false => self.key().set_hstring(name, value)?,
         })
@@ -121,14 +125,14 @@ impl Node {
     }
 
     pub fn get_paths(&self, entry: &StringEntry) -> Result<Vec<PathBuf>> {
-        Ok(split_paths(&self.get(entry.name)?.unwrap_or_default()).collect())
+        Ok(split_paths(&self.get(&entry.name)?.unwrap_or_default()).collect())
     }
 
     pub fn set_paths(&self, entry: &StringEntry, value: Vec<PathBuf>) -> Result<()> {
         let value = join_paths(value)?;
-        match entry.is_expand {
-            true => self.set_expand(entry.name, value),
-            false => self.set(entry.name, value),
+        match entry.expandable {
+            true => self.set_expand(&entry.name, value),
+            false => self.set(&entry.name, value),
         }
     }
 

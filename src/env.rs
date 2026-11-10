@@ -13,10 +13,10 @@ impl Environment {
         Self::create(HKCU, "Environment", true)
     }
 
-    pub fn create(node: &Node, path: impl AsRef<str>, is_path_expand: bool) -> Result<Self> {
+    pub fn create(node: &Node, path: impl AsRef<str>, path_expandable: bool) -> Result<Self> {
         Ok(Self {
             node: node.create(path)?,
-            path: StringEntry::new("Path", is_path_expand),
+            path: StringEntry::new("Path", path_expandable),
         })
     }
 
