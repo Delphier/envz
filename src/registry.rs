@@ -75,17 +75,19 @@ impl Node {
         expandable: bool,
     ) -> Result<()> {
         let value = &HSTRING::from(value.as_ref());
-        Ok(match expandable {
-            true => self.key().set_expand_hstring(name, value)?,
-            false => self.key().set_hstring(name, value)?,
-        })
+        let result = if expandable {
+            self.key().set_expand_hstring(name, value)
+        } else {
+            self.key().set_hstring(name, value)
+        };
+        Ok(result?)
     }
 
     fn remove_value(&self, name: impl AsRef<str>) -> Result<()> {
-        Ok(match self.key().remove_value(name) {
-            Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => (),
-            r @ _ => r?,
-        })
+        match self.key().remove_value(name) {
+            Err(e) if e.code() == ERROR_FILE_NOT_FOUND.to_hresult() => Ok(()),
+            r => Ok(r?),
+        }
     }
 
     pub fn keys(&self) -> Result<KeyIterator<'_>> {
