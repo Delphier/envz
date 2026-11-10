@@ -27,6 +27,13 @@ impl StringEntry {
             expandable,
         }
     }
+
+    pub const fn from_static(name: &'static str, expandable: bool) -> Self {
+        Self {
+            name: Cow::Borrowed(name),
+            expandable,
+        }
+    }
 }
 
 pub struct Node {
